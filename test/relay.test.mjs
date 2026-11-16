@@ -111,6 +111,24 @@ test('the relay token never reaches the executed command', async () => {
   assert.match(env, /^HOME=/m);
 });
 
+test('the shim exits when the command exits even if its stdin stays open', async () => {
+  // The browser bridge client never closes stdin (src/providers/container-browser/client.ts).
+  const result = await new Promise((resolve) => {
+    const child = spawn(shimPath, wsArgs(['/bin/sh', '-c', 'echo done; exit 3']), {
+      env: { PATH: process.env.PATH, DOCKER_CONFIG: config },
+    });
+    const out = [];
+    child.stdout.on('data', (d) => out.push(d));
+    const timer = setTimeout(() => child.kill('SIGKILL'), 5000);
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      resolve({ code, stdout: Buffer.concat(out).toString() });
+    });
+  });
+  assert.equal(result.code, 3);
+  assert.equal(result.stdout, 'done\n');
+});
+
 test('a workdir outside the workspace is refused', async () => {
   const r = await docker([
     'exec', '-i', '--user', 'node', '--workdir', '/etc', 'nod-workspace', '/bin/pwd',

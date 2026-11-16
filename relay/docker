@@ -87,10 +87,19 @@ function run(socket) {
     }
   });
   socket.on('error', () => {});
-  socket.on('close', () => {
+  // The agent ends its side right after the exit frame. Finish on that end, not on a
+  // full close: Nod's browser client keeps our stdin open, so our side never ends.
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    process.stdin.unpipe(socket);
+    socket.destroy();
     if (exitCode === undefined) fail(`relay ${target} closed without an exit status`, 125);
     process.stdout.write('', () => process.exit(exitCode));
-  });
+  };
+  socket.on('end', finish);
+  socket.on('close', finish);
 }
 
 for (const signal of ['SIGTERM', 'SIGINT', 'SIGHUP']) process.on(signal, () => process.exit(137));

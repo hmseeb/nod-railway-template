@@ -7,11 +7,11 @@ services:
     environment: { POSTGRES_USER: nod, POSTGRES_PASSWORD: testpw, POSTGRES_DB: nod }
   workspace:
     image: nod-railway-workspace
-    environment: { NOD_RELAY_TOKEN: ${RELAY}, NOD_RELAY_PORT: '7070' }
+    environment: { NOD_RELAY_TOKEN: "${RELAY}", NOD_RELAY_PORT: '7070' }
     volumes: [ws:/workspace]
   browser:
     image: nod-railway-browser
-    environment: { NOD_RELAY_TOKEN: ${RELAY}, NOD_RELAY_PORT: '7070' }
+    environment: { NOD_RELAY_TOKEN: "${RELAY}", NOD_RELAY_PORT: '7070' }
     shm_size: 512m
     volumes: [br:/data]
   server:
