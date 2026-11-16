@@ -54,7 +54,7 @@ def main():
         want["buckets"] = cur.get("buckets") or want["buckets"]
     saved = rw.gql("""mutation($id:String!,$input:TemplateUpsertConfigInput!){
                         templateUpsertConfig(id:$id,input:$input){id code}}""",
-                   {"id": tid, "input": {"name": sheet["name"], "workspaceId": WORKSPACE,
+                   {"id": tid, "input": {"name": os.environ.get("TEMPLATE_NAME", sheet["name"]), "workspaceId": WORKSPACE,
                                          "serializedConfig": want, "canvasConfig": {}}}, internal=True)["templateUpsertConfig"]
     idfile.write_text(saved["id"] + "\n")
     print("saved", saved)

@@ -2,7 +2,7 @@
 
 Railway template for [Nod](https://github.com/n8n-io/nod) 0.8.0, the personal agent from n8n labs. It has its own Linux workspace and Chromium.
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/TEMPLATE_CODE)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/nod)
 
 The deployer guide is in [TEMPLATE_OVERVIEW.md](TEMPLATE_OVERVIEW.md). The build sheet, with the reasoning behind each choice, is in [template.json](template.json).
 
