@@ -1,0 +1,34 @@
+# Local mirror of the Railway topology: four services, private network only, no
+# Docker socket anywhere. Run from repo root after building the images.
+name: nod-railway-test
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment: { POSTGRES_USER: nod, POSTGRES_PASSWORD: testpw, POSTGRES_DB: nod }
+  workspace:
+    image: nod-railway-workspace
+    environment: { NOD_RELAY_TOKEN: ${RELAY}, NOD_RELAY_PORT: '7070' }
+    volumes: [ws:/workspace]
+  browser:
+    image: nod-railway-browser
+    environment: { NOD_RELAY_TOKEN: ${RELAY}, NOD_RELAY_PORT: '7070' }
+    shm_size: 512m
+    volumes: [br:/data]
+  server:
+    image: nod-railway-server
+    environment:
+      NOD_HOST: '::'
+      PORT: '4310'
+      NOD_PUBLIC_URL: http://localhost:4310
+      NOD_AUTH_TOKEN: ${AUTH}
+      NOD_VAULT_SEED: testseed
+      DATABASE_URL: postgresql://nod:testpw@postgres:5432/nod
+      NOD_RELAY_TOKEN: ${RELAY}
+      NOD_WORKSPACE_RELAY: workspace:7070
+      NOD_BROWSER_RELAY: browser:7070
+      WORKSPACE_CONTAINER: nod-workspace
+      BROWSER_CONTAINER: nod-browser
+      NOD_ANALYTICS_ENABLED: 'false'
+    ports: ['127.0.0.1:4310:4310']
+    volumes: [srv:/var/lib/nod]
+volumes: { ws: {}, br: {}, srv: {} }

@@ -1,0 +1,11 @@
+# Nod workspace for Railway: upstream Dockerfile.workspace plus nod-relay-agent.
+# One volume at /workspace; /home/node (tools that persist across tasks) lives
+# inside it at /workspace/.nod-home because a Railway service gets one volume.
+ARG BASE=nod-base-workspace
+FROM ${BASE}
+USER root
+RUN mv /home/node /opt/nod-home-skel && ln -s /workspace/.nod-home /home/node
+COPY --chmod=444 relay/nod-relay-agent.mjs /opt/nod-relay/nod-relay-agent.mjs
+COPY --chmod=555 images/workspace-entry.sh /usr/local/bin/nod-railway-workspace
+ENV NOD_RELAY_MODE=workspace
+CMD ["/usr/local/bin/nod-railway-workspace"]

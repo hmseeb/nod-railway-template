@@ -1,0 +1,9 @@
+# Nod browser for Railway: upstream Dockerfile.browser plus nod-relay-agent.
+ARG BASE=nod-base-browser
+FROM ${BASE}
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends util-linux && rm -rf /var/lib/apt/lists/*
+COPY --chmod=444 relay/nod-relay-agent.mjs /opt/nod-relay/nod-relay-agent.mjs
+COPY --chmod=555 images/browser-entry.sh /usr/local/bin/nod-railway-browser
+ENV NOD_RELAY_MODE=browser
+CMD ["/usr/local/bin/nod-railway-browser"]

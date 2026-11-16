@@ -1,0 +1,98 @@
+#!/usr/bin/env node
+// `docker` shim for the Nod server on Railway.
+//
+// Nod's server only ever runs two docker commands (src/providers/docker/command.ts
+// and src/providers/container-browser/index.ts):
+//   docker exec -i --user U --workdir W nod-workspace /usr/bin/python3 -I -u -c ...
+//   docker exec -i --user node nod-browser node /app/bridge.mjs
+// This shim forwards exactly that shape to nod-relay-agent on the matching Railway
+// service and reproduces docker's stdio and exit code. Anything else exits 125.
+// Config comes from $DOCKER_CONFIG/nod-relay.json, because Nod passes the child only
+// PATH, LANG, TMPDIR and DOCKER_* variables (src/providers/process.ts).
+import net from 'node:net';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const fail = (message, code = 125) => {
+  process.stderr.write(`nod-relay shim: ${message}\n`);
+  process.exit(code);
+};
+
+const argv = process.argv.slice(2);
+if (argv[0] !== 'exec') fail(`only "docker exec" is supported, got "${argv[0] ?? ''}"`);
+let user = 'root';
+let workdir;
+let i = 1;
+for (; i < argv.length; i++) {
+  const a = argv[i];
+  if (a === '-i' || a === '--interactive') continue;
+  if (a === '-u' || a === '--user') user = argv[++i];
+  else if (a === '-w' || a === '--workdir') workdir = argv[++i];
+  else if (a.startsWith('--user=')) user = a.slice(7);
+  else if (a.startsWith('--workdir=')) workdir = a.slice(10);
+  else if (a.startsWith('-')) fail(`unsupported flag ${a}`);
+  else break;
+}
+const container = argv[i];
+const cmd = argv.slice(i + 1);
+if (!container || !cmd.length) fail('a container and a command are required');
+const target = /^nod-workspace(?:-|$)/.test(container)
+  ? 'workspace'
+  : /^nod-browser(?:-|$)/.test(container)
+    ? 'browser'
+    : fail(`unknown container ${container}`);
+
+let config;
+try {
+  config = JSON.parse(readFileSync(join(process.env.DOCKER_CONFIG || '/etc/nod-relay', 'nod-relay.json'), 'utf8'));
+} catch (error) {
+  fail(`cannot read relay config: ${error.message}`);
+}
+const address = config[target];
+const split = typeof address === 'string' ? address.lastIndexOf(':') : -1;
+if (split < 1) fail(`no relay address for ${target}`);
+const host = address.slice(0, split).replace(/^\[|\]$/g, '');
+const port = Number(address.slice(split + 1));
+// The server marks the workspace unusable until restart after one failed exec,
+// so ride out a sibling service that is still booting instead of failing fast.
+const deadline = Date.now() + (config.connectTimeoutMs ?? 90_000);
+
+function connect() {
+  const socket = net.connect({ host, port, autoSelectFamily: true, allowHalfOpen: true });
+  socket.once('connect', () => run(socket));
+  socket.once('error', (error) => {
+    if (socket.connecting === false && socket.bytesWritten > 0) return;
+    if (Date.now() > deadline) fail(`relay ${target} at ${address} unreachable: ${error.code || error.message}`);
+    setTimeout(connect, 1000);
+  });
+}
+
+function run(socket) {
+  socket.setKeepAlive(true, 15_000);
+  socket.write(JSON.stringify({ token: config.token, user, workdir, cmd }) + '\n');
+  process.stdin.pipe(socket, { end: true });
+  let buffered = Buffer.alloc(0);
+  let exitCode;
+  socket.on('data', (chunk) => {
+    buffered = Buffer.concat([buffered, chunk]);
+    while (buffered.length >= 5) {
+      const length = buffered.readUInt32BE(1);
+      if (buffered.length < 5 + length) break;
+      const type = buffered[0];
+      const payload = buffered.subarray(5, 5 + length);
+      buffered = buffered.subarray(5 + length);
+      if (type === 1) process.stdout.write(payload);
+      else if (type === 2) process.stderr.write(payload);
+      else if (type === 3) exitCode = payload.readInt32BE(0);
+    }
+  });
+  socket.on('error', () => {});
+  socket.on('close', () => {
+    if (exitCode === undefined) fail(`relay ${target} closed without an exit status`, 125);
+    process.stdout.write('', () => process.exit(exitCode));
+  });
+}
+
+for (const signal of ['SIGTERM', 'SIGINT', 'SIGHUP']) process.on(signal, () => process.exit(137));
+process.stdout.on('error', () => process.exit(137));
+connect();

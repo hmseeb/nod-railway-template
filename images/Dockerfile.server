@@ -1,0 +1,9 @@
+# Nod server for Railway: upstream deployment/self-host/Dockerfile plus the docker shim.
+ARG BASE=nod-base-server
+FROM ${BASE}
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends util-linux && rm -rf /var/lib/apt/lists/*
+COPY --chmod=555 relay/docker /usr/local/bin/docker
+COPY --chmod=555 images/server-entry.sh /usr/local/bin/nod-railway-server
+WORKDIR /app
+CMD ["/usr/local/bin/nod-railway-server"]
