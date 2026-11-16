@@ -3,7 +3,7 @@
   "name": "Nod",
   "services": {
     "Nod": {
-      "icon": "https://raw.githubusercontent.com/n8n-io/nod/nod-v0.8.0/public/favicon.svg",
+      "icon": "https://raw.githubusercontent.com/n8n-io/nod/nod-v0.8.0/public/nod-logo.png",
       "source": {
         "$note": "Upstream deployment/self-host/Dockerfile + relay/docker shim + images/server-entry.sh (chowns the volume, derives NOD_VAULT_KEY, writes the relay config, drops to node).",
         "image": "ghcr.io/hmseeb/nod-railway-server:0.8.0"

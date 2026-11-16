@@ -50,7 +50,7 @@ while time.time() < deadline:
             seen.add(m["id"])
             print("\nASSISTANT:", (m.get("text") or json.dumps(m.get("content")))[:1500])
     text = json.dumps(items)
-    if "42" in text and "Example Domain" in text:
+    if "42 Linux" in text and ("Example Domain" in text or "documentation examples" in text):
         print("\nE2E PASS: workspace (42 Linux) and browser (Example Domain) both answered")
         sys.exit(0)
 print("\nE2E INCOMPLETE")
