@@ -1,12 +1,12 @@
 {
-  "$note": "Build sheet for Nod 0.8.0 (n8n-io/nod, Apache-2.0, tag nod-v0.8.0, commit f6f86be2, 2026-11-16), n8n labs' personal agent with its own Linux workspace and Chromium. Upstream self-host (deployment/self-host/compose.yaml) runs server + postgres + workspace + browser + a filtered Docker-socket proxy, and the server reaches workspace and browser ONLY via `docker exec -i` (src/providers/docker/command.ts:278, src/providers/container-browser/index.ts:37). Railway has no Docker socket and one volume per service, so: (1) the server image replaces the docker CLI with relay/docker, a shim that forwards exactly those two exec shapes over the private network; (2) workspace and browser each run relay/nod-relay-agent.mjs as root, which checks a shared token, applies upstream docker-proxy.mjs's allow rules, drops to uid node (or the 2xxxx:1002 connected-CLI uids) and returns stdio + exit code; (3) the workspace's two upstream volumes (/workspace, /home/node) share one Railway volume via a /home/node symlink. Every server-to-workspace file operation already goes through exec stdio (artifactRead/WriteProgram), so no shared volume is needed. Upstream publishes no images; .github/workflows/images.yml builds upstream's own Dockerfiles at the pinned tag and layers the relay on top. Lost vs upstream: workspace-network (iptables egress firewall, needs NET_ADMIN, which Railway does not grant), so workspace commands can reach the project's private network; every service there is token- or password-protected. Policy gate CLEAR (2026-11-16): the agent acts on the deployer's own accounts and sites they name, asks before acting, and sends nothing unprompted.",
+  "$note": "Build sheet for Nod 0.8.3 (n8n-io/nod, Apache-2.0, tag nod-v0.8.3, commit 36458072, 2026-11-17), n8n labs' personal agent with its own Linux workspace and Chromium. Upstream self-host (deployment/self-host/compose.yaml) runs server + postgres + workspace + browser + a filtered Docker-socket proxy, and the server reaches workspace and browser ONLY via `docker exec -i` (src/providers/docker/command.ts:278, src/providers/container-browser/index.ts:37). Railway has no Docker socket and one volume per service, so: (1) the server image replaces the docker CLI with relay/docker, a shim that forwards exactly those two exec shapes over the private network; (2) workspace and browser each run relay/nod-relay-agent.mjs as root, which checks a shared token, applies upstream docker-proxy.mjs's allow rules, drops to uid node (or the 2xxxx:1002 connected-CLI uids) and returns stdio + exit code; (3) the workspace's two upstream volumes (/workspace, /home/node) share one Railway volume via a /home/node symlink. Every server-to-workspace file operation already goes through exec stdio (artifactRead/WriteProgram), so no shared volume is needed. Upstream publishes no images; .github/workflows/images.yml builds upstream's own Dockerfiles at the pinned tag and layers the relay on top. Lost vs upstream: workspace-network (iptables egress firewall, needs NET_ADMIN, which Railway does not grant), so workspace commands can reach the project's private network; every service there is token- or password-protected. Policy gate CLEAR (2026-11-16): the agent acts on the deployer's own accounts and sites they name, asks before acting, and sends nothing unprompted.",
   "name": "Nod",
   "services": {
     "Nod": {
-      "icon": "https://raw.githubusercontent.com/n8n-io/nod/nod-v0.8.0/public/nod-logo.png",
+      "icon": "https://raw.githubusercontent.com/n8n-io/nod/nod-v0.8.3/public/nod-logo.png",
       "source": {
         "$note": "Upstream deployment/self-host/Dockerfile + relay/docker shim + images/server-entry.sh (chowns the volume, derives NOD_VAULT_KEY, writes the relay config, drops to node).",
-        "image": "ghcr.io/hmseeb/nod-railway-server:0.8.0"
+        "image": "ghcr.io/hmseeb/nod-railway-server:0.8.3"
       },
       "deploy": {
         "$note": "No healthcheckPath: Nod 403s any Host other than NOD_PUBLIC_URL's (src/server/access.ts:90), and Railway's prober sends Host: healthcheck.railway.app; /api/health also requires the bearer token. Restart on failure covers a server that boots before Postgres.",
@@ -60,7 +60,7 @@
       "icon": "https://cdn.simpleicons.org/linux",
       "source": {
         "$note": "Upstream Dockerfile.workspace (Python, Node, LibreOffice, ffmpeg, OCR) + nod-relay-agent.",
-        "image": "ghcr.io/hmseeb/nod-railway-workspace:0.8.0"
+        "image": "ghcr.io/hmseeb/nod-railway-workspace:0.8.3"
       },
       "deploy": { "restartPolicyType": "ALWAYS" },
       "volumeMounts": { "mountPath": "/workspace" },
@@ -73,7 +73,7 @@
       "icon": "https://cdn.simpleicons.org/googlechrome",
       "source": {
         "$note": "Upstream Dockerfile.browser (Chromium under Xvfb, agent-browser worker) + nod-relay-agent. Sign-ins the agent makes persist in /data.",
-        "image": "ghcr.io/hmseeb/nod-railway-browser:0.8.0"
+        "image": "ghcr.io/hmseeb/nod-railway-browser:0.8.3"
       },
       "deploy": { "restartPolicyType": "ALWAYS" },
       "volumeMounts": { "mountPath": "/data" },

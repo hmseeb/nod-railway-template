@@ -11,7 +11,7 @@ Nod's own self-host setup uses Docker Compose. The server controls its workspace
 - **Browser**: Chromium under a virtual display. Sites the agent signs in to stay signed in.
 - **Postgres**: conversations, tasks, memory and the encrypted Vault
 
-The images are built from Nod's own Dockerfiles at a pinned release (0.8.0), so a redeploy never pulls a surprise upgrade. Access, Vault and relay secrets are generated for you at deploy time.
+The images are built from Nod's own Dockerfiles at a pinned release (0.8.3), so a redeploy never pulls a surprise upgrade. Access, Vault and relay secrets are generated for you at deploy time.
 
 ## Common Use Cases
 
@@ -79,7 +79,6 @@ The agent's Linux workspace and Chromium do the heavy lifting. Upstream recommen
 
 - "This host is not permitted": `NOD_PUBLIC_URL` does not match the address in your browser. Fix it after adding a custom domain.
 - "The workspace is unavailable. Restart Nod before continuing.": the Workspace service was down when a task ran. Make sure it is green, then restart the Nod service.
-- Desktop app shows "Setup needs another try. These settings are not supported." at the end of onboarding: a Nod 0.8.0 desktop bug in remote mode ([n8n-io/nod#947](https://github.com/n8n-io/nod/issues/947)). Your onboarding is already saved on the server. Quit and reopen the app instead of pressing Try again, or finish onboarding in a normal browser at your Railway URL.
 - ChatGPT sign-in ends on a `127.0.0.1:1455` page that does not load: expected for a remote server. Copy that full address into **Callback URL** in Nod and select **Complete sign-in**. Port 1455 never needs to be public.
 - Never give Workspace, Browser or Postgres a public domain.
 

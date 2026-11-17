@@ -9,7 +9,7 @@ WS = "fc4796db-2c6c-4354-a564-d4a1d900af53"
 TID = (HERE / os.environ.get("TEMPLATE_IDFILE", "template-id")).read_text().strip()
 NAME = os.environ.get("TEMPLATE_NAME") or json.loads((HERE / "template.json").read_text())["name"]
 DESC = "Personal AI agent by n8n labs with its own Linux workspace and browser"
-ICON = "https://raw.githubusercontent.com/n8n-io/nod/nod-v0.8.0/public/nod-logo.png"
+ICON = "https://raw.githubusercontent.com/n8n-io/nod/nod-v0.8.3/public/nod-logo.png"
 assert len(DESC) <= 75 and "\u2014" not in DESC
 
 rw.gql("mutation($id:String!,$i:TemplateUpsertSettingsInput!){templateUpsertSettings(id:$id,input:$i){id}}",

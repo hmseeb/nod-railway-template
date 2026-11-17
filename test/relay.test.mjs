@@ -129,6 +129,15 @@ test('the shim exits when the command exits even if its stdin stays open', async
   assert.equal(result.stdout, 'done\n');
 });
 
+test('node may run in /var/tmp (0.8.3 process-stop check after an uncertain command)', async () => {
+  // src/providers/docker/command.ts commandStopProgram; docker-proxy.mjs allows it since nod-v0.8.3.
+  const r = await docker([
+    'exec', '-i', '--user', 'node', '--workdir', '/var/tmp', 'nod-workspace', '/bin/pwd',
+  ]);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout.toString().trim(), /\/var\/tmp$/);
+});
+
 test('a workdir outside the workspace is refused', async () => {
   const r = await docker([
     'exec', '-i', '--user', 'node', '--workdir', '/etc', 'nod-workspace', '/bin/pwd',
