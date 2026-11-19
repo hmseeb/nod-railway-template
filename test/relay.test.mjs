@@ -129,6 +129,20 @@ test('the shim exits when the command exits even if its stdin stays open', async
   assert.equal(result.stdout, 'done\n');
 });
 
+test('workspace exec runs the 0.9.0 agent shell shape (/bin/bash --noprofile --norc -p)', async () => {
+  // src/providers/docker/index.ts exec() since nod-v0.9.0: fixed PATH prelude, then the script.
+  const script = 'echo "$((6*7)) $PWD"; echo warn >&2; exit 4';
+  const r = await docker(
+    wsArgs([
+      '/bin/bash', '--noprofile', '--norc', '-p', '-c',
+      `nod_workspace_path=$PATH\nexport PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\n${script}`,
+    ]),
+  );
+  assert.equal(r.code, 4, r.stderr);
+  assert.equal(r.stdout.toString(), `42 ${join(workspaceRoot, thread)}\n`);
+  assert.match(r.stderr, /warn/);
+});
+
 test('node may run in /var/tmp (0.8.3 process-stop check after an uncertain command)', async () => {
   // src/providers/docker/command.ts commandStopProgram; docker-proxy.mjs allows it since nod-v0.8.3.
   const r = await docker([

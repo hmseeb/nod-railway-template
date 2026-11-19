@@ -11,7 +11,7 @@ Nod's own self-host setup uses Docker Compose. The server controls its workspace
 - **Browser**: Chromium under a virtual display. Sites the agent signs in to stay signed in.
 - **Postgres**: conversations, tasks, memory and the encrypted Vault
 
-The images are built from Nod's own Dockerfiles at a pinned release (0.8.3), so a redeploy never pulls a surprise upgrade. Access, Vault and relay secrets are generated for you at deploy time.
+The images are built from Nod's own Dockerfiles at a pinned release (0.9.0), so a redeploy never pulls a surprise upgrade. Access, Vault and relay secrets are generated for you at deploy time.
 
 ## Common Use Cases
 
